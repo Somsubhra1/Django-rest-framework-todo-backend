@@ -1,6 +1,7 @@
 asgiref==3.3.4
 autopep8==1.5.7
 Django==3.2.3
+djangorestframework==3.12.4
 pycodestyle==2.7.0
 python-dotenv==0.17.1
 pytz==2021.1
