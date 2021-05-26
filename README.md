@@ -23,6 +23,7 @@ Create .env file in the root directory and add the following configuations:
 ```
 DJANGO_ENV - Set environment as development or production
 SECRET_KEY - Set Secret key for django internal usage
+JWT_SECRET - Set JWT Secret key for django authentication purpose
 ```
 
 ## License
