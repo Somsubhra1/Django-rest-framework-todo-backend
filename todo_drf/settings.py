@@ -140,4 +140,4 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Required for cookies
 CORS_ALLOW_CREDENTIALS = True
 
-# django_on_heroku.settings(locals())
+django_on_heroku.settings(locals())
