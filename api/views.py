@@ -1,12 +1,10 @@
+from django.utils.decorators import decorator_from_middleware
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.exceptions import NotAuthenticated, NotFound
+from rest_framework.exceptions import NotFound
+from todo_drf.middleware import JWTDecodeMiddleware
 from .serializers import TaskSerializer
 from .models import Task
-import jwt
-import os
-
-JWT_SECRET = os.environ.get('JWT_SECRET')
 
 # Create your views here.
 
@@ -28,20 +26,14 @@ def apiOverView(request):
 
 
 @api_view(['GET'])
+# creating middleware decorator from class to use on views
+@decorator_from_middleware(JWTDecodeMiddleware)
 def taskList(request):
 
-    token = request.COOKIES.get('jwt')
-
-    if not token:
-        raise NotAuthenticated('Unauthenticated')
-
-    try:
-        payload = jwt.decode(token, JWT_SECRET, ['HS256'])
-    except jwt.ExpiredSignatureError:
-        raise NotAuthenticated('Unauthenticated')
+    print(request.user)
 
     # Getting all tasks from DB
-    tasks = Task.objects.filter(user=payload['id'])
+    tasks = Task.objects.filter(user=request.user)
 
     # Serializing the database data as API response
     # many=True should be kept when we expect multiple data from model
@@ -50,19 +42,10 @@ def taskList(request):
 
 
 @api_view(["GET"])
+@decorator_from_middleware(JWTDecodeMiddleware)
 def taskDetail(request, pk):
 
-    token = request.COOKIES.get('jwt')
-
-    if not token:
-        raise NotAuthenticated('Unauthenticated')
-
-    try:
-        payload = jwt.decode(token, JWT_SECRET, ['HS256'])
-    except jwt.ExpiredSignatureError:
-        raise NotAuthenticated('Unauthenticated')
-
-    task = Task.objects.filter(id=pk, user=payload['id']).first()
+    task = Task.objects.filter(id=pk, user=request.user).first()
 
     serializer = TaskSerializer(task, many=False)
 
@@ -70,19 +53,10 @@ def taskDetail(request, pk):
 
 
 @api_view(['POST'])
+@decorator_from_middleware(JWTDecodeMiddleware)
 def taskCreate(request):
 
-    token = request.COOKIES.get('jwt')
-
-    if not token:
-        raise NotAuthenticated('Unauthenticated')
-
-    try:
-        payload = jwt.decode(token, JWT_SECRET, ['HS256'])
-    except jwt.ExpiredSignatureError:
-        raise NotAuthenticated('Unauthenticated')
-
-    request.data['user'] = payload['id']
+    request.data['user'] = request.user.id
 
     serializer = TaskSerializer(data=request.data)
 
@@ -93,24 +67,15 @@ def taskCreate(request):
 
 
 @api_view(['PATCH'])
+@decorator_from_middleware(JWTDecodeMiddleware)
 def taskUpdate(request, pk):
 
-    token = request.COOKIES.get('jwt')
-
-    if not token:
-        raise NotAuthenticated('Unauthenticated')
-
-    try:
-        payload = jwt.decode(token, JWT_SECRET, ['HS256'])
-    except jwt.ExpiredSignatureError:
-        raise NotAuthenticated('Unauthenticated')
-
-    task = Task.objects.filter(id=pk, user=payload['id']).first()
+    task = Task.objects.filter(id=pk, user=request.user).first()
 
     if not task:
         raise NotFound('Task not found')
 
-    request.data['user'] = payload['id']
+    request.data['user'] = request.user.id
 
     serializer = TaskSerializer(instance=task, data=request.data)
 
@@ -121,19 +86,10 @@ def taskUpdate(request, pk):
 
 
 @api_view(['DELETE'])
+@decorator_from_middleware(JWTDecodeMiddleware)
 def taskDelete(request, pk):
 
-    token = request.COOKIES.get('jwt')
-
-    if not token:
-        raise NotAuthenticated('Unauthenticated')
-
-    try:
-        payload = jwt.decode(token, JWT_SECRET, ['HS256'])
-    except jwt.ExpiredSignatureError:
-        raise NotAuthenticated('Unauthenticated')
-
-    task = Task.objects.filter(id=pk, user=payload['id']).first()
+    task = Task.objects.filter(id=pk, user=request.user).first()
 
     if not task:
         raise NotFound('Task not found!')

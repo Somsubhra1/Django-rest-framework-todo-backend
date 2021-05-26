@@ -1,9 +1,11 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.models import User
-from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated
+from django.utils.decorators import decorator_from_middleware
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.decorators import api_view
 from .serializer import UserSerializer
+from todo_drf.middleware import JWTDecodeMiddleware
 import os
 import jwt
 import datetime
@@ -78,18 +80,10 @@ class LoginView(APIView):
 
 
 @api_view(['GET'])
+@decorator_from_middleware(JWTDecodeMiddleware)
 def UserView(request):
-    token = request.COOKIES.get('jwt')
 
-    if not token:
-        raise NotAuthenticated('Unauthenticated')
-
-    try:
-        payload = jwt.decode(token, JWT_SECRET, ['HS256'])
-    except jwt.ExpiredSignatureError:
-        raise NotAuthenticated('Unauthenticated')
-
-    user = User.objects.get(id=payload['id'])
+    user = User.objects.get(id=request.user.id)
 
     serializer = UserSerializer(user)
 
